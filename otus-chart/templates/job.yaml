@@ -32,7 +32,8 @@ spec:
                 email VARCHAR(255),
                 phone VARCHAR(50),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                password_hash VARCHAR(255)
             );
             GRANT ALL PRIVILEGES ON DATABASE userdb to {{ .Values.postgresql.auth.username | quote }};
             GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ .Values.postgresql.auth.username | quote }};

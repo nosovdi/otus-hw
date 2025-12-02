@@ -1,22 +1,19 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from datetime import datetime
 from prometheus_flask_exporter import PrometheusMetrics
-from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
+from functools import wraps
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
 # Инициализация Prometheus метрик
 metrics = PrometheusMetrics(app, defaults_prefix='flask')
-
-# Добавляем пользовательские метрики
 metrics.info('app_info', 'Application info', version='1.0.0')
 
-# Создаем гистограмму для измерения латенси с квантилями
 metrics.register_default(
     metrics.histogram(
         'http_request_duration_seconds',
@@ -26,20 +23,18 @@ metrics.register_default(
     )
 )
 
-# Счетчик для ошибок 500
 http_errors = metrics.counter(
     'http_errors_total',
     'Total count of HTTP errors by type',
     labels={'status': lambda: request.status_code, 'endpoint': lambda: request.endpoint}
 )
 
-# Декоратор для отслеживания ошибок 500
 @app.errorhandler(500)
 def handle_500_error(error):
     http_errors.inc()
     return error_response('Internal Server Error', 500)
 
-api_ver='/api/v1'
+api_ver = '/api/v1'
 
 # PostgreSQL connection configuration
 DB_CONFIG = {
@@ -54,33 +49,6 @@ DB_CONFIG = {
 def get_db_connection():
     conn = psycopg2.connect(**DB_CONFIG)
     return conn
-
-# Initialize PostgreSQL database
-def init_db():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Create users table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(256) UNIQUE NOT NULL,
-                firstName VARCHAR(255),
-                lastName VARCHAR(255),
-                email VARCHAR(255),
-                phone VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("Database initialized successfully")
-    except Exception as e:
-        print(f"Error initializing database: {e}")
 
 # Error response helper
 def error_response(message, code=400):
@@ -99,6 +67,35 @@ def user_to_dict(user):
         'email': user['email'],
         'phone': user['phone']
     }
+
+def token_required(f):
+    """Упрощенный декоратор - проверяем только заголовок X-Authenticated-User-ID"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # Получаем user_id из заголовка (API Gateway должен его установить)
+        user_id_header = request.headers.get('X-Authenticated-User-ID')
+        
+        if not user_id_header:
+            return jsonify({'message': 'Authentication required!'}), 401
+        
+        try:
+            current_user_id = int(user_id_header)
+            g.current_user_id = current_user_id
+            
+            # Проверяем доступ к ресурсу
+            requested_user_id = kwargs.get('user_id')
+            if requested_user_id is not None:
+                if current_user_id != requested_user_id:
+                    return jsonify({
+                        'message': f'Access denied! User {current_user_id} cannot access user {requested_user_id} data'
+                    }), 403
+                    
+        except ValueError:
+            return jsonify({'message': 'Invalid user ID!'}), 401
+        
+        return f(*args, **kwargs)
+    
+    return decorated
 
 # Routes
 @app.route(api_ver+'/user', methods=['POST'])
@@ -140,7 +137,6 @@ def create_user():
     except psycopg2.Error as e:
         if conn:
             conn.rollback()
-        # Логируем ошибку 500
         app.logger.error(f'Database error in create_user: {str(e)}')
         return error_response('Database error: ' + str(e), 500)
     finally:
@@ -148,8 +144,8 @@ def create_user():
             conn.close()
 
 @app.route(api_ver+'/user/<int:user_id>', methods=['GET'])
+@token_required
 def get_user(user_id):
-    
     conn = None
     try:
         conn = get_db_connection()
@@ -173,6 +169,7 @@ def get_user(user_id):
             conn.close()
 
 @app.route(api_ver+'/user/<int:user_id>', methods=['PUT'])
+@token_required
 def update_user(user_id):
     data = request.get_json()
 
@@ -221,6 +218,7 @@ def update_user(user_id):
             conn.close()
 
 @app.route(api_ver+'/user/<int:user_id>', methods=['DELETE'])
+@token_required
 def delete_user(user_id):
     conn = None
 
@@ -264,9 +262,5 @@ def health_check():
     except:
         return jsonify({"status": "Error, database disconnected"}), 500
 
-# Метрики Prometheus доступны по пути /metrics
-# Этот путь автоматически создается библиотекой prometheus-flask-exporter
-
 if __name__ == '__main__':
-#    init_db()
     app.run(debug=True, host='0.0.0.0', port=8000, use_reloader=False)

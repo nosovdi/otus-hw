@@ -3,12 +3,16 @@
 ```
 echo "127.0.0.1 arch.homework" >> /etc/hosts
 minikube tunnel
-helm upgrade -i otus-chart oci://ghcr.io/nosovdi/otus-chart:1.0.2
+helm upgrade -i otus-chart oci://ghcr.io/nosovdi/otus-chart:1.0.3 -n default
+helm upgrade -i otus-apigataway oci://ghcr.io/nosovdi/otus-apigataway-chart:1.0.1 -n default
 ```
 ## Исходники Helm chart
 https://github.com/nosovdi/otus-hw/tree/main/otus-chart
+https://github.com/nosovdi/otus-hw/tree/main/api_gateway/helm-chart
+
 ## Postman коллекция для тестов
 https://github.com/nosovdi/otus-hw/blob/main/UserService.postman_collection.json
+Для тестов ApiGataway https://github.com/nosovdi/otus-hw/blob/main/UserService_with apigataway.postman_collection.json
 ## Мониторинг
 Установить Prometheus командой
 ```
