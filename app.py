@@ -4,9 +4,40 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from datetime import datetime
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Инициализация Prometheus метрик
+metrics = PrometheusMetrics(app, defaults_prefix='flask')
+
+# Добавляем пользовательские метрики
+metrics.info('app_info', 'Application info', version='1.0.0')
+
+# Создаем гистограмму для измерения латенси с квантилями
+metrics.register_default(
+    metrics.histogram(
+        'http_request_duration_seconds',
+        'HTTP request duration in seconds',
+        buckets=(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0),
+        labels={'method': lambda: request.method, 'endpoint': lambda: request.endpoint, 'status': lambda r: r.status_code}
+    )
+)
+
+# Счетчик для ошибок 500
+http_errors = metrics.counter(
+    'http_errors_total',
+    'Total count of HTTP errors by type',
+    labels={'status': lambda: request.status_code, 'endpoint': lambda: request.endpoint}
+)
+
+# Декоратор для отслеживания ошибок 500
+@app.errorhandler(500)
+def handle_500_error(error):
+    http_errors.inc()
+    return error_response('Internal Server Error', 500)
 
 api_ver='/api/v1'
 
@@ -109,6 +140,8 @@ def create_user():
     except psycopg2.Error as e:
         if conn:
             conn.rollback()
+        # Логируем ошибку 500
+        app.logger.error(f'Database error in create_user: {str(e)}')
         return error_response('Database error: ' + str(e), 500)
     finally:
         if conn:
@@ -133,6 +166,7 @@ def get_user(user_id):
         return jsonify(user_to_dict(user))
         
     except psycopg2.Error as e:
+        app.logger.error(f'Database error in get_user: {str(e)}')
         return error_response('Database error: ' + str(e), 500)
     finally:
         if conn:
@@ -180,6 +214,7 @@ def update_user(user_id):
     except psycopg2.Error as e:
         if conn:
             conn.rollback()
+        app.logger.error(f'Database error in update_user: {str(e)}')
         return error_response('Database error: ' + str(e), 500)
     finally:
         if conn:
@@ -213,6 +248,7 @@ def delete_user(user_id):
     except psycopg2.Error as e:
         if conn:
             conn.rollback()
+        app.logger.error(f'Database error in delete_user: {str(e)}')
         return error_response('Database error: ' + str(e), 500)
     finally:
         if conn:
@@ -228,6 +264,9 @@ def health_check():
     except:
         return jsonify({"status": "Error, database disconnected"}), 500
 
+# Метрики Prometheus доступны по пути /metrics
+# Этот путь автоматически создается библиотекой prometheus-flask-exporter
+
 if __name__ == '__main__':
 #    init_db()
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='0.0.0.0', port=8000, use_reloader=False)

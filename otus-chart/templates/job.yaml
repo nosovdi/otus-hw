@@ -11,7 +11,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: postgres-init
-        image: bitnami/postgresql:15
+        image: docker.io/bitnami/postgresql:latest
         env:
         - name: DB_PASSWORD
           value: {{ .Values.postgresql.auth.password | quote }}
@@ -23,7 +23,7 @@ spec:
         - /bin/sh
         - -c
         - |
-          sleep 10 && psql -h {{ .Release.Name }}-postgresql -U postgres -d postgres <<EOF
+          sleep 10 && psql -h {{ .Release.Name }}-postgresql -U postgres -d userdb <<EOF
           CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(256) UNIQUE NOT NULL,
@@ -34,4 +34,7 @@ spec:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            GRANT ALL PRIVILEGES ON DATABASE userdb to {{ .Values.postgresql.auth.username | quote }};
+            GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ .Values.postgresql.auth.username | quote }};
+            GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {{ .Values.postgresql.auth.username | quote }};
           EOF

@@ -1,0 +1,15 @@
+server:
+  service: 
+    servicePort: 9090
+
+serverFiles:
+    prometheus.yml:
+      scrape_configs:
+        - job_name: otus-app
+          static_configs:
+            - targets:
+              - otus-chart:8000
+        - job_name: ingress-nginx
+          static_configs:
+            - targets:
+              - ingress-nginx-controller.ingress-nginx.svc.cluster.local:10254
