@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Request
+from fastapi import FastAPI, HTTPException, Depends, status, Request, Response  # <-- ВСЕ импорты FastAPI здесь
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
@@ -10,6 +10,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Optional
 import hashlib
+from prometheus_client import generate_latest, REGISTRY, CONTENT_TYPE_LATEST  # <-- Добавить CONTENT_TYPE_LATEST
 
 app = FastAPI(title="API Gateway", version="1.0.0")
 
@@ -398,10 +399,8 @@ async def update_user_profile(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Backend service unavailable: {str(e)}"
             )
-    
-from fastapi import FastAPI, HTTPException, Depends, status, Request, Response  # <-- Добавьте Response
 
-# ... остальной код ...
+# УДАЛИТЬ эту строку: from fastapi import FastAPI, HTTPException, Depends, status, Request, Response  # <-- Удалить дублирующий импорт
 
 @app.delete(f"{API_PREFIX}/user/{{user_id}}")
 async def delete_user_profile(
@@ -508,15 +507,14 @@ async def verify_token_endpoint(current_user: dict = Depends(get_current_user)):
         "is_authenticated": True
     }
 
-
 @app.get("/health/")
 async def health_check():
-  async with httpx.AsyncClient() as client:
-    try:
-        response = await client.get(f"{YOUR_APP_URL}/health/")
-        return response.json()
-    except httpx.RequestError:
-        raise HTTPException(status_code=500, detail="Backend service unavailable")
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{YOUR_APP_URL}/health/")
+            return response.json()
+        except httpx.RequestError:
+            raise HTTPException(status_code=500, detail="Backend service unavailable")
 
 @app.get("/metrics")
 async def metrics():

@@ -4,7 +4,7 @@
 echo "127.0.0.1 arch.homework" >> /etc/hosts
 minikube tunnel
 helm upgrade -i otus-chart oci://ghcr.io/nosovdi/otus-chart:1.0.3 -n default
-helm upgrade -i otus-apigataway oci://ghcr.io/nosovdi/otus-apigataway-chart:1.0.1 -n default
+helm upgrade -i otus-apigataway oci://ghcr.io/nosovdi/otus-apigataway-chart:1.0.2 -n default
 ```
 ## Исходники Helm chart
 https://github.com/nosovdi/otus-hw/tree/main/otus-chart
