@@ -10,11 +10,11 @@ helm upgrade -i notification-service ghcr.io/nosovdi/charts/notification-service
 helm upgrade -i order-service ghcr.io/nosovdi/charts/order-service:1.0.0 --set image.tag=1.1.0  -n default
 ```
 ## Исходники Helm chart
-https://github.com/nosovdi/otus-hw/tree/main/user-service/helm-chart
-https://github.com/nosovdi/otus-hw/tree/main/api-gateway/helm-chart
-https://github.com/nosovdi/otus-hw/tree/main/billing-service/helm-chart
-https://github.com/nosovdi/otus-hw/tree/main/nitification-service/helm-chart
-https://github.com/nosovdi/otus-hw/tree/main/order-service/helm-chart
+- https://github.com/nosovdi/otus-hw/tree/main/user-service/helm-chart
+- https://github.com/nosovdi/otus-hw/tree/main/api-gateway/helm-chart
+- https://github.com/nosovdi/otus-hw/tree/main/billing-service/helm-chart
+- https://github.com/nosovdi/otus-hw/tree/main/nitification-service/helm-chart
+- https://github.com/nosovdi/otus-hw/tree/main/order-service/helm-chart
 
 ## Postman коллекция для тестов
 https://github.com/nosovdi/otus-hw/blob/main/UserService_with_apigataway.postman_collection.json.  
