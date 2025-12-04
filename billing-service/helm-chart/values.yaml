@@ -7,11 +7,11 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: ghcr.io/nosovdi/otus-docker
+  repository: ghcr.io/nosovdi/billing-service
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.0.9"
+  tag: "1.0.0"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -32,7 +32,7 @@ serviceAccount:
   name: ""
 
 secret:
-  DB_HOST: otus-chart-postgresql
+  DB_HOST: user-service-postgresql
   DB_NAME: userdb
   DB_USER: userdb
   DB_PASSWORD: password
@@ -74,12 +74,6 @@ ingress:
   hosts:
     - host: arch.homework
       paths:
-      #  - path: /otusapp/[^/]+/([^/]+)(/|$)(.*)
-      #    pathType: ImplementationSpecific
-        - path: /health/
-          pathType: Prefix
-        - path: /api/v1
-          pathType: Prefix
         - path: /
           pathType: Prefix
   tls: []
@@ -100,15 +94,8 @@ resources: {}
   #   memory: 128Mi
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /health/
-    port: http
-readinessProbe:
-  httpGet:
-    path: /health/
-    port: http
-
+livenessProbe: {}
+readinessProbe: {}
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
   enabled: false
@@ -135,27 +122,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-# PostgreSQL block
-postgresql:
-  enabled: true
-  image:
-    tag: latest
-  auth:
-    database: "userdb"
-    username: "userdb"
-    password: "password"
-    postgresPassword: "password"
-  primary:
-   # persistence:
-   #   enabled: false
-    extendedConfiguration: |
-      listen_addresses = '*'
-    pgHbaConfiguration: |
-      host all all all md5
-      local all all    peer
-#  primary:
-#    initdb:
-#      scripts:
-#        init.sql: |
-#          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

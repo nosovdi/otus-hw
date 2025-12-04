@@ -3,16 +3,21 @@
 ```
 echo "127.0.0.1 arch.homework" >> /etc/hosts
 minikube tunnel
-helm upgrade -i otus-chart oci://ghcr.io/nosovdi/otus-chart:1.0.3 -n default
-helm upgrade -i otus-apigataway oci://ghcr.io/nosovdi/otus-apigataway-chart:1.0.2 -n default
+helm upgrade -i user-service ghcr.io/nosovdi/charts/user-service:1.0.0 --set image.tag=1.1.0  -n default
+helm upgrade -i api-gataway ghcr.io/nosovdi/charts/api-gataway:1.0.0 --set image.tag=1.1.0  -n default
+helm upgrade -i billing-service: ghcr.io/nosovdi/charts/billing-service:1.0.0 --set image.tag=1.1.0  -n default
+helm upgrade -i notification-service ghcr.io/nosovdi/charts/notification-service:1.0.0 --set image.tag=1.1.0  -n default
+helm upgrade -i order-service ghcr.io/nosovdi/charts/order-service:1.0.0 --set image.tag=1.1.0  -n default
 ```
 ## Исходники Helm chart
-https://github.com/nosovdi/otus-hw/tree/main/otus-chart
-https://github.com/nosovdi/otus-hw/tree/main/api_gateway/helm-chart
+https://github.com/nosovdi/otus-hw/tree/main/user-service/helm-chart
+https://github.com/nosovdi/otus-hw/tree/main/api-gateway/helm-chart
+https://github.com/nosovdi/otus-hw/tree/main/billing-service/helm-chart
+https://github.com/nosovdi/otus-hw/tree/main/nitification-service/helm-chart
+https://github.com/nosovdi/otus-hw/tree/main/order-service/helm-chart
 
 ## Postman коллекция для тестов
-https://github.com/nosovdi/otus-hw/blob/main/UserService.postman_collection.json
-Для тестов ApiGataway https://github.com/nosovdi/otus-hw/blob/main/UserService_with apigataway.postman_collection.json
+https://github.com/nosovdi/otus-hw/blob/main/UserService_with_apigataway.postman_collection.json
 ## Мониторинг
 Установить Prometheus командой
 ```
@@ -32,5 +37,5 @@ helm install grafana grafana/grafana -f values.yaml
 ## Полезные команды
 ```
 docker build --platform linux/arm64,linux/amd64 -t ghcr.io/nosovdi/otus-docker:1.0.7 .
-helm push otus-chart-1.0.0.tgz oci://ghcr.io/nosovdi
+helm push otus-chart-1.0.0.tgz oci://ghcr.io/nosovdi/charts
 ```

@@ -35,6 +35,26 @@ spec:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 password_hash VARCHAR(255)
             );
+          CREATE TABLE IF NOT EXISTS billing (
+            id INTEGER PRIMARY KEY,
+            balance DECIMAL(10, 2) DEFAULT 0.00 NOT NULL
+            );
+          CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY,
+                recipient_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                is_read BOOLEAN NOT NULL DEFAULT FALSE
+            );
+          CREATE TABLE  orders (
+              id SERIAL PRIMARY KEY,
+              price DECIMAL(10, 2) NOT NULL,
+              product_name VARCHAR(255) NOT NULL,
+              status VARCHAR(20) NOT NULL DEFAULT 'new',
+              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              user_id INTEGER NOT NULL
+          );
             GRANT ALL PRIVILEGES ON DATABASE userdb to {{ .Values.postgresql.auth.username | quote }};
             GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ .Values.postgresql.auth.username | quote }};
             GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {{ .Values.postgresql.auth.username | quote }};
