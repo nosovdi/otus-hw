@@ -17,7 +17,16 @@ https://github.com/nosovdi/otus-hw/tree/main/nitification-service/helm-chart
 https://github.com/nosovdi/otus-hw/tree/main/order-service/helm-chart
 
 ## Postman коллекция для тестов
-https://github.com/nosovdi/otus-hw/blob/main/UserService_with_apigataway.postman_collection.json
+https://github.com/nosovdi/otus-hw/blob/main/UserService_with_apigataway.postman_collection.json.  
+Основной сценарий тестирования (указаны названия и порядок выполнения запросов в коллекции Postman):
+1) Signup user - регистрация нового пользователя
+2) Login user - вход зарегистрированного пользователя использую креды из 1 пункта. Получаем Bearer Token. Все дальнейшие запросы требуют Bearer Token для авторизации.
+3) User Deposit - вносим сумму на счет
+4) Create Order - создаем 2 заказа, со стоимость больше остатка на счете и со стоимостью меньше остатка на счете.
+5) User Balance - смотрим баланс, убеждаемся что сумма списалась
+6) Get Orders - просматриваем список своих заказов.
+7) Get Notification - просматриваем список своих уведомлений
+
 ## Мониторинг
 Установить Prometheus командой
 ```
